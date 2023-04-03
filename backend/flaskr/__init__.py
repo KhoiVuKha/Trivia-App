@@ -109,7 +109,7 @@ def create_app(test_config=None):
 
         except:
             db.session.rollback()
-            abort(422)
+            abort(422) # Un Processable
 
     # An endpoint to POST a new question, which will require the question and answer text, category, and difficulty score.
     @app.route("/questions", methods=["POST"])
@@ -147,7 +147,7 @@ def create_app(test_config=None):
 
         except:
             db.session.rollback()
-            abort(422)
+            abort(422) # Un Processable
 
     """
     A POST endpoint to get questions based on a search term. 
@@ -170,19 +170,29 @@ def create_app(test_config=None):
                 'success': True,
                 'questions': questions,
                 'total_questions': len(selection),
-                'current_category': None
+                'current_category': [] # currently this field doesn't contain any data.
             })
         else:
-            abort(404)
+            abort(404) # Question searching not found
 
-    """
-    @TODO:
-    Create a GET endpoint to get questions based on category.
+    # Create a GET endpoint to get questions based on category.
+    @app.route('/categories/<int:category_id>/questions', methods=['GET'])
+    def get_questions_of_category(category_id):
+        selection = Question.query.order_by(Question.id).filter(
+            Question.category == category_id).all()
 
-    TEST: In the "List" tab / main screen, clicking on one of the
-    categories in the left column will cause only questions of that
-    category to be shown.
-    """
+        if len(selection) == 0:
+            abort(404) # Not found - no question for this category id
+
+        # Get list of question
+        questions = paginate_questions(request, selection)
+
+        return jsonify({
+            'success': True,
+            'questions': questions,
+            'total_questions': len(selection),
+            'current_category': category_id
+        })
 
     """
     @TODO:
