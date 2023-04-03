@@ -111,16 +111,43 @@ def create_app(test_config=None):
             db.session.rollback()
             abort(422)
 
-    """
-    @TODO:
-    Create an endpoint to POST a new question,
-    which will require the question and answer text,
-    category, and difficulty score.
+    # An endpoint to POST a new question, which will require the question and answer text, category, and difficulty score.
+    @app.route("/questions", methods=["POST"])
+    def create_question():
+        body = request.get_json()
 
-    TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.
-    """
+        # Prepare data for the new question
+        new_question = body.get("question", None) # Get will return "question" if match else automatically return "None".
+        new_answer = body.get("answer", None)
+        new_difficulty = body.get("difficulty", None)
+        new_category = body.get("category", None)
+
+        try:
+            # Create new Question model
+            question = Question (
+                question = new_question, 
+                answer = new_answer, 
+                difficulty = new_difficulty,
+                category = new_category
+            )
+
+            # Insert new question to database
+            question.insert()
+
+            # Get list of questions after insert
+            selection = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
+
+            return jsonify({
+                "success": True,
+                "questions": current_questions,
+                "total_questions": len(selection),
+                "created": question.id
+            })
+
+        except:
+            db.session.rollback()
+            abort(422)
 
     """
     @TODO:

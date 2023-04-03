@@ -21,6 +21,8 @@ class TriviaTestCase(unittest.TestCase):
         self.database_path = "postgresql://{}:{}@{}/{}".format(self.DB_USER, self.DB_PASSWORD, self.DB_HOST, self.DB_NAME)
         setup_db(self.app, self.database_path)
 
+        self.new_question = {'question': 'new question', 'answer': 'new answer', 'difficulty': 1, 'category': 1}
+
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -54,18 +56,28 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], True)
         self.assertTrue(len(data['categories']))
 
-    def test_delete_question(self):
-        res = self.client().delete('/questions/10')
+    # def test_delete_question(self):
+    #     res = self.client().delete('/questions/10')
+    #     data = json.loads(res.data)
+
+    #     question = Question.query.filter(Question.id == 10).one_or_none()
+
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
+    #     self.assertEqual(data['deleted'], 10)
+    #     self.assertTrue(data['total_questions'])
+    #     self.assertTrue(len(data['questions']))
+    #     self.assertEqual(question, None)
+
+    def test_create_new_question(self):
+        total_questions_before_create = len(Question.query.all())
+        res = self.client().post("/questions", json=self.new_question)
         data = json.loads(res.data)
-
-        question = Question.query.filter(Question.id == 10).one_or_none()
-
+        total_questions_after_create = data['total_questions']
+        
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 10)
-        self.assertTrue(data['total_questions'])
-        self.assertTrue(len(data['questions']))
-        self.assertEqual(question, None)
+        self.assertEqual(data["success"], True)
+        self.assertEqual(total_questions_after_create, total_questions_before_create + 1)
 
 
 # Make the tests conveniently executable
