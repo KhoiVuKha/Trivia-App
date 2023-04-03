@@ -160,8 +160,10 @@ def create_app(test_config=None):
 
         if search:
             print("Search for question with searchTerm: ", search)
-            selection = Question.query.order_by(Question.id).filter(
-                Question.question.ilike("%{}%".format(search))).all()
+            selection = Question.query \
+                .order_by(Question.id) \
+                .filter(Question.question.ilike("%{}%".format(search))) \
+                .all()
             
             # Get list of question that match the search term
             questions = paginate_questions(request, selection)
@@ -178,8 +180,10 @@ def create_app(test_config=None):
     # Create a GET endpoint to get questions based on category.
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def get_questions_of_category(category_id):
-        selection = Question.query.order_by(Question.id).filter(
-            Question.category == category_id).all()
+        selection = Question.query \
+            .order_by(Question.id) \
+            .filter(Question.category == category_id) \
+            .all()
 
         if len(selection) == 0:
             abort(404) # Not found - no question for this category id
@@ -194,23 +198,75 @@ def create_app(test_config=None):
             'current_category': category_id
         })
 
-    """
-    @TODO:
-    Create a POST endpoint to get questions to play the quiz.
-    This endpoint should take category and previous question parameters
-    and return a random questions within the given category,
-    if provided, and that is not one of the previous questions.
+    @app.route('/quizzes', methods=['POST'])
+    def play_quiz():
+        body = request.get_json()
+        
+        # Prepare data to get a new quiz
+        previous_questions = body.get('previous_questions')
+        quiz_category = body.get('quiz_category')
+        
+        try:
+            list_remain_questions = []   
+            if quiz_category is None:
+                list_remain_questions = Question.query \
+                    .filter(Question.id.notin_((previous_questions))) \
+                    .all()
+            else:
+                list_remain_questions = Question.query \
+                    .filter_by(category=quiz_category['id']) \
+                    .filter(Question.id.notin_((previous_questions))) \
+                    .all()
 
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not.
-    """
+            if len(list_remain_questions) < 1:
+                abort(404) # Not found - No question found
 
-    """
-    @TODO:
-    Create error handlers for all expected errors
-    including 404 and 422.
-    """
+            new_question = random.choice(list_remain_questions).format()
+
+            return jsonify({
+                'success': True,
+                'question': new_question
+            })
+        except:
+            abort(422) # Un processable.
+
+    # Error handlers for all expected errors
+    @app.errorhandler(400)
+    def bad_request(error):
+        return (
+            jsonify({"success": False, 
+                     "error": 400, 
+                     "message": 
+                     "Bad Request"}),
+            400
+        )
+    
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            jsonify({"success": False, 
+                     "error": 404, 
+                     "message": "Not Found"}),
+            404
+        )
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return (
+            jsonify({"success": False, 
+                     "error": 422, 
+                     "message": "Unprocessable"}),
+            422
+        )
+    
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return (
+            jsonify({"success": False, 
+                     "error": 500, 
+                     "message": "Internal Server Error"}),
+            500
+        )
 
     return app
 
