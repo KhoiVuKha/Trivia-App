@@ -48,6 +48,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data["questions"]))
         self.assertTrue(len(data['categories']))
 
+    # Test get categories successfully
     def test_get_categories(self):
         res = self.client().get("/categories")
         data = json.loads(res.data)
@@ -55,6 +56,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
         self.assertTrue(len(data['categories']))
+    
+    # TODO: Test get categories fail
 
     # def test_delete_question(self):
     #     res = self.client().delete('/questions/10')
@@ -78,6 +81,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
         self.assertEqual(total_questions_after_create, total_questions_before_create + 1)
+
+    def test_search_questions(self):
+        new_search = {'searchTerm': 'World Cup'}
+        res = self.client().post('/questions/search', json=new_search)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['questions'])
+        self.assertIsNotNone(data['total_questions'])
 
 
 # Make the tests conveniently executable
