@@ -33,11 +33,26 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Headers', 'GET, POST, PATCH, DELETE, OPTIONS')
         return response
 
-    """
-    @TODO:
-    Create an endpoint to handle GET requests
-    for all available categories.
-    """
+    # An endpoint to handle GET requests for all available categories.
+    @app.route('/categories')
+    def get_categories():
+        categories = Category.query.order_by(Category.id).all()
+
+        # Imidiately return if category empty.
+        if len(categories) == 0:
+            abort(404)
+
+        # Get dictionary of categories
+        category_dict = {}
+        for category in categories:
+            category_dict[category.id] = category.type
+
+        return jsonify(
+            {
+                "success": True,
+                "categories": category_dict
+            }
+        )
 
     # An endpoint to handle GET requests for questions, including pagination (every 10 questions).
     @app.route('/questions')
